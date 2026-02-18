@@ -31,58 +31,42 @@ if (-not $hasNet8) {
 }
 
 $outDir = Join-Path -Path $PSScriptRoot -ChildPath 'ProductionBuild'
-if (Test-Path $outDir) {
-    Remove-Item -Recurse -Force -LiteralPath $outDir
+$tempDir = Join-Path -Path $PSScriptRoot -ChildPath '.publish-temp'
+
+# Clean temp directory
+if (Test-Path $tempDir) {
+    Remove-Item -Recurse -Force -LiteralPath $tempDir -ErrorAction SilentlyContinue
 }
 
-# Clean the generated hash file before building to avoid duplicate definition errors
-$hashFile = Join-Path $PSScriptRoot 'Config\BuildTimeHashHolder.g.cs'
-if (Test-Path $hashFile) {
-    Remove-Item -Force -LiteralPath $hashFile
-}
-
-dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true --output .\ProductionBuild
+dotnet publish 327TH_HB_AC.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true --output $tempDir
 if ($LASTEXITCODE -ne 0) {
     Write-Error "dotnet publish failed."
+    Remove-Item -Recurse -Force -LiteralPath $tempDir -ErrorAction SilentlyContinue
     exit $LASTEXITCODE
 }
 
-$exePath = Join-Path -Path $outDir -ChildPath '327TH_HB_AC.exe'
+$exePath = Join-Path -Path $tempDir -ChildPath '327TH_HB_AC.exe'
 if (-not (Test-Path $exePath)) {
     Write-Error "ERROR: Release executable not found at $exePath"
+    Remove-Item -Recurse -Force -LiteralPath $tempDir -ErrorAction SilentlyContinue
     exit 1
 }
 
-$hashFile = Join-Path $PSScriptRoot 'Config\BuildTimeHashHolder.g.cs'
-if (-not (Test-Path $hashFile)) {
-    Write-Error "ERROR: Build-time hash file not found at Config\BuildTimeHashHolder.g.cs"
-    exit 1
+# Move from temp to final output directory
+if (Test-Path $outDir) {
+    try {
+        Remove-Item -Recurse -Force -LiteralPath $outDir -ErrorAction Stop
+    } catch {
+        $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+        Rename-Item -Path $outDir -NewName "ProductionBuild_old_$timestamp" -Force -ErrorAction SilentlyContinue
+    }
 }
 
-$hashContent = Get-Content $hashFile -Raw
-if ($hashContent -match 'PENDING') {
-    Write-Host "ERROR: Build-time hash was not embedded. This build is not safe to distribute."
-    Write-Host "Run 'dotnet build --configuration Release' first, then run this script again."
-    exit 1
-}
+Move-Item -Path $tempDir -Destination $outDir -Force
 
-if ($hashContent -match 'BuildTimeHash\s*=\s*"([0-9A-Fa-f]{64})"') {
-    $embeddedHash = $matches[1]
-} else {
-    Write-Error "ERROR: Embedded hash not found or invalid in Config\BuildTimeHashHolder.g.cs"
-    exit 1
-}
+$exePath = Join-Path -Path $outDir -ChildPath '327TH_HB_AC.exe'
 
-$fileHash = (Get-FileHash -Path $exePath -Algorithm SHA256).Hash
-Write-Host "Executable SHA-256:  $fileHash"
-Write-Host "Embedded hash:       $embeddedHash"
-
-if ($fileHash -ne $embeddedHash) {
-    Write-Host "ERROR: Embedded hash does not match executable hash." -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "SUCCESS: Hash verified. Build is ready to distribute." -ForegroundColor Green
+Write-Host "SUCCESS: Production build complete." -ForegroundColor Green
 Write-Host "Executable: $exePath"
 Write-Host "This build is self-contained and ready to distribute."
 

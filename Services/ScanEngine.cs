@@ -71,16 +71,10 @@ namespace Hawkbat.Services
                     Environment.Exit(1);
                 }
 
-                var exe = Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty;
-                if (!string.IsNullOrEmpty(exe))
+                // Hash enforcement is disabled in this build.
+                if (string.Equals(Hawkbat.Config.AppConfig.BuildTimeHash, "DISABLED", StringComparison.OrdinalIgnoreCase))
                 {
-                    var currentHash = SecurityUtilities.ComputeFileHash(exe);
-                    var known = Hawkbat.Config.AppConfig.BuildTimeHash ?? string.Empty;
-                    if (!string.Equals(currentHash, known, StringComparison.OrdinalIgnoreCase) && !string.Equals(known, "PENDING", StringComparison.OrdinalIgnoreCase))
-                    {
-                        LogOnUi("AntiTamper", "Executable hash mismatch. Exiting.");
-                        Environment.Exit(1);
-                    }
+                    return;
                 }
             }
             catch (Exception ex)

@@ -75,12 +75,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Print generated build-time hash file
-        shell: powershell
-        run: |
-          $path = Join-Path $PWD 'Config\BuildTimeHashHolder.g.cs'
-          if (Test-Path $path) { Get-Content $path | Write-Host } else { Write-Host 'BuildTimeHashHolder.g.cs not found' }
-
       - name: Upload Release artifact
         uses: actions/upload-artifact@v4
         with:
