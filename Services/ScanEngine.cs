@@ -259,9 +259,13 @@ namespace Hawkbat.Services
 
         private void RunPowerShellFile(string scriptPath, CancellationToken cancellationToken)
         {
+            // Use full system path to powershell.exe instead of relying on PATH environment variable
+            var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var powershellExe = Path.Combine(systemFolder, "WindowsPowerShell\\v1.0\\powershell.exe");
+            
             var psi = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = powershellExe,
                 Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
