@@ -1,6 +1,8 @@
 ﻿bin/
 obj/
-.vs/
 TestBuild/
 ProductionBuild/
+.vs/
 *.user
+Config/BuildTimeHashHolder.g.cs
+Scripts/embed-hash-temp.ps1

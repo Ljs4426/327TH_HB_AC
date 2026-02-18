@@ -1,30 +1,43 @@
+name: Release
+
 on:
   push:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: windows-latest
-    permissions:
-      contents: write
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
+
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore 327TH_HB_AC.csproj
 
       - name: Publish release build
         run: dotnet publish 327TH_HB_AC.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true --output ./ProductionBuild
+
+      - name: Confirm EXE exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "./ProductionBuild/327TH_HB_AC.exe")) {
+            Write-Error "EXE not found in ProductionBuild folder."
+            exit 1
+          }
+          Write-Host "EXE found. Size: $((Get-Item './ProductionBuild/327TH_HB_AC.exe').Length / 1MB) MB"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
