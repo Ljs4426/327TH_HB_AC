@@ -1,3 +1,7 @@
+## 
+
+
+
 # 327TH HB AC
 
 Modular anticheat application with dynamic theming and unit-based configuration.
@@ -29,14 +33,16 @@ Drop unit zip files into the application or browse to select them. Each unit pac
 
 ```json
 {
-  "name": "Unit Name",
-  "subtitle": "Description",
-  "accentColor": "#0078D4",
-  "textColor": "#FFFFFF",
-  "backgroundColor": "#000000",
+  "name": "",
+  "subtitle": "",
+  "accentColor": "#",
+  "textColor": "#",
+  "backgroundColor": "#",
   "hasLogo": true,
-  "requireUsername": true,
-  "version": "1.0.0"
+  "requireUsername": false,
+  "version": "1.0.0",
+  "scanResults": [
+  ]
 }
 ```
 
